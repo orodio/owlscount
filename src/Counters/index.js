@@ -4,10 +4,6 @@ import {
   counters$ as getCounters$,
 } from '@orodio/counter'
 
-const data = [
-  {id: 1, title:"dog", count:7}
-]
-
 export default class XhrCounters extends React.Component {
   state = {
     loading: true,
@@ -35,6 +31,6 @@ export default class XhrCounters extends React.Component {
   render () {
     const { loading, counters } = this.state
     if (loading) return <div>Loading...</div>
-    return <Counters counters={counters}/>
+    return <Counters manifest counters={counters}/>
   }
 }
