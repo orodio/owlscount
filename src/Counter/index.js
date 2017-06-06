@@ -1,28 +1,23 @@
-import React   from 'react'
-import Counter from './Counter'
-import {
-  counter as getCounter,
-  delCounter,
-} from '@orodio/counter'
+import React        from 'react'
+import Counter      from './Counter'
+import getCounter   from '../__intents__/counter/get'
+import setCount     from '../__intents__/counter/setCount'
+import delCounter   from '../__intents__/counter/del'
+import { COUNTERS } from '../__constants__/counters'
+import { KNOWN }    from '../__constants__/util'
+import { connect }  from 'react-redux'
 
-export default class XhrCounter extends React.Component {
+class XhrCounter extends React.Component {
   state = {
-    loading: true,
+    loading:  true,
     deleting: false,
-    title: "",
-    count: 0,
   }
 
-  componentWillMount () {
-    this.mount = true
-  }
+  componentWillMount   () { this.mount = true }
+  componentWillUnmount () { this.mount = false }
 
   componentDidMount () {
     this.getCounter()
-  }
-
-  componentWillUnmount () {
-    this.mount = false
   }
 
   componentWillReceiveProps (props) {
@@ -30,30 +25,38 @@ export default class XhrCounter extends React.Component {
   }
 
   getCounter () {
-    getCounter(this.props.id)
-      .then(res => this.mount && this.setState({
-        ...res.counter,
-        loading: false,
-      }))
+    getCounter(this.props)
+      .then(() => this.mount && this.setState({ loading:false }))
   }
 
   onDel = () => {
     this.mount && this.setState({ deleting:true })
-    delCounter(this.props.id)
+    delCounter(this.props)
+  }
+
+  incBy = delta => e => {
+    if (e) e.preventDefault()
+    setCount(this.props, this.props.count + delta)
   }
 
   render () {
-    const { onDel } = this
-    const { loading, deleting, title, count } = this.state
+    const { onDel, incBy } = this
+    const { loading, deleting } = this.state
+    const { title, count } = this.props
 
-    if (deleting) return <tr><td>deleting</td></tr>
-
-    return <Counter
-      loading={ loading }
-      deleting={ deleting }
-      onDel={ onDel }
-      title={ title }
-      count={ count }
-    />
+    return <Counter {...{
+      loading,
+      deleting,
+      title,
+      count,
+      onDel,
+      onDec: incBy(-1),
+      onInc: incBy(1),
+    }}/>
   }
 }
+
+export default connect((state, { id }) => ({
+  title: state.getIn([COUNTERS, KNOWN, id, "title"], ""),
+  count: state.getIn([COUNTERS, KNOWN, id, "count"], 0),
+}))(XhrCounter)

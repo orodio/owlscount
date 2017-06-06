@@ -1,13 +1,14 @@
-import React    from 'react'
-import Counters from './Counters'
-import {
-  counters$ as getCounters$,
-} from '@orodio/counter'
+import React        from 'react'
+import { List }     from 'immutable'
+import { connect }  from 'react-redux'
+import { COUNTERS } from '../__constants__/counters'
+import { ORDER }    from '../__constants__/util'
+import counters$    from '../__intents__/counters/get$'
+import Counters     from './Counters'
 
-export default class XhrCounters extends React.Component {
+export class XhrCounters extends React.Component {
   state = {
     loading: true,
-    counters: [],
   }
 
   componentWillMount () {
@@ -15,22 +16,27 @@ export default class XhrCounters extends React.Component {
   }
 
   componentDidMount () {
-    this.poll$ = getCounters$()
-      .do(res => this.mount && this.setState({
-        loading:false,
-        counters: res.counters,
-      }))
-      .subscribe()
+    this.poll$ = counters$(this.props)
+      .subscribe(() => this.mount && this.setState({ loading:false }))
   }
 
   componentWillUnmount () {
     this.mount = false
-    this.poll$unsubscribe()
+    this.poll$.unsubscribe()
   }
 
   render () {
-    const { loading, counters } = this.state
-    if (loading) return <div>Loading...</div>
-    return <Counters manifest counters={counters}/>
+    const { loading } = this.state
+    const { counters } = this.props
+
+    return <Counters
+      loading={loading}
+      counters={counters}
+      manifest
+    />
   }
 }
+
+export default connect((state) => ({
+  counters: state.getIn([COUNTERS, ORDER], new List()).toJS()
+}))(XhrCounters)
